@@ -49,3 +49,11 @@ next-env.d.ts
 /.impeccable
 
 .vercel
+
+backend/.env
+backend/data/
+backend/.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+deploy/.env
