@@ -1,0 +1,7 @@
+use_default_settings: true
+server:
+  secret_key: "REPLACE_WITH_openssl_rand_hex_32"   # [HUMAN] generate and paste
+  limiter: false
+  image_proxy: false
+search:
+  formats: [html, json]

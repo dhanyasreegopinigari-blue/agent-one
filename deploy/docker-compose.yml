@@ -1,0 +1,48 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      OLLAMA_KEEP_ALIVE: 30m
+    volumes:
+      - ollama:/root/.ollama
+    # no published ports: reachable only on the compose network
+
+  backend:
+    build: ../backend
+    restart: unless-stopped
+    env_file: ../backend/.env
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      SEARXNG_URL: http://searxng:8080
+      DATA_DIR: /app/data
+      ENV: production
+    volumes:
+      - appdata:/app/data
+    depends_on: [ollama, searxng]
+    expose: ["8000"]
+
+  searxng:
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    profiles: ["prod"]
+    ports: ["80:80", "443:443"]
+    environment:
+      BACKEND_DOMAIN: ${BACKEND_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [backend]
+
+volumes:
+  ollama:
+  appdata:
+  caddy_data:
+  caddy_config:
