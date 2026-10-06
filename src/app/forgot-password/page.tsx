@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import AuthCard from '@/components/auth/AuthCard';
+import { supabase } from '@/lib/supabaseClient';
 import { Mail, ArrowRight, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
@@ -16,21 +17,37 @@ export default function ForgotPasswordPage() {
     setErrorMessage('');
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    const cleanEmail = email.trim().toLowerCase();
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: `${origin}/reset-password`,
+      });
+
+      if (error) {
+        setErrorMessage(error.message);
+        setIsSubmitting(false);
+        return;
+      }
+
       setIsSent(true);
       setIsSubmitting(false);
-    }, 700);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to dispatch recovery email');
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <AuthCard
       title="Reset Agent One Password"
-      subtitle="Enter your work email address and we'll dispatch a secure recovery link."
+      subtitle="Enter your email address and we'll dispatch a secure recovery link."
       badgeText="Account Recovery"
       footerLink={{
         text: 'Remembered your password?',
         label: 'Back to sign in',
-        href: '/login'
+        href: '/login',
       }}
     >
       {isSent ? (
@@ -46,10 +63,10 @@ export default function ForgotPasswordPage() {
           </p>
           <div className="pt-2">
             <Link
-              href="/reset-password"
+              href="/login"
               className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-400 hover:underline"
             >
-              <span>Proceed to Password Reset</span>
+              <span>Back to Sign In</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -65,7 +82,7 @@ export default function ForgotPasswordPage() {
 
           <div>
             <label className="text-xs font-bold text-[#0F172A] dark:text-[#F2F4F3] block mb-1.5">
-              Account Work Email
+              Account Email
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 dark:text-[#8E9690] absolute left-3.5 top-1/2 -translate-y-1/2" />

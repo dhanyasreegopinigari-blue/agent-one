@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthCard from '@/components/auth/AuthCard';
+import { supabase } from '@/lib/supabaseClient';
 import { Lock, Eye, EyeOff, ArrowRight, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export default function ResetPasswordPage() {
@@ -24,23 +25,38 @@ export default function ResetPasswordPage() {
       return;
     }
 
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
+      return;
+    }
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        setErrorMessage(error.message);
+        setIsSubmitting(false);
+        return;
+      }
+
       setIsSuccess(true);
       setIsSubmitting(false);
-      setTimeout(() => router.push('/login'), 2000);
-    }, 700);
+      setTimeout(() => router.replace('/dashboard'), 2000);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to update password');
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <AuthCard
       title="Set New Agent One Password"
-      subtitle="Choose a strong, memorable password to secure your financial document audit workspace."
+      subtitle="Choose a strong, memorable password to secure your account."
       badgeText="Security Reset"
       footerLink={{
         text: 'Want to return?',
         label: 'Back to sign in',
-        href: '/login'
+        href: '/login',
       }}
     >
       {isSuccess ? (
@@ -52,7 +68,7 @@ export default function ResetPasswordPage() {
             Password Updated Successfully!
           </h3>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-[#8E9690] leading-relaxed">
-            Redirecting you to the sign in page in 2 seconds...
+            Redirecting you to the dashboard in 2 seconds...
           </p>
         </div>
       ) : (

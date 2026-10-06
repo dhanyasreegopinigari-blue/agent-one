@@ -3,7 +3,6 @@ import { Plus_Jakarta_Sans, JetBrains_Mono, Newsreader } from 'next/font/google'
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
-import ImpeccableLiveClient from '@/components/theme/ImpeccableLiveClient';
 
 const jakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -117,7 +116,6 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             {children}
-            <ImpeccableLiveClient />
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -14,11 +14,10 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('docfin_theme') as Theme | null;
+      const saved = localStorage.getItem('theme') as Theme | null;
       if (saved === 'dark' || saved === 'light') {
         setThemeState(saved);
         if (saved === 'dark') {
@@ -27,21 +26,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           document.documentElement.classList.remove('dark');
         }
       } else {
-        // Default to Light Mode as per DocFin design specification
-        setThemeState('light');
-        document.documentElement.classList.remove('dark');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const initial = prefersDark ? 'dark' : 'light';
+        setThemeState(initial);
+        if (initial === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       }
     } catch (e) {
       console.warn('Theme init error:', e);
-    } finally {
-      setMounted(true);
     }
   }, []);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     try {
-      localStorage.setItem('docfin_theme', newTheme);
+      localStorage.setItem('theme', newTheme);
       if (newTheme === 'dark') {
         document.documentElement.classList.add('dark');
       } else {

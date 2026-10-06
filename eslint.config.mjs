@@ -14,7 +14,9 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-empty-object-type": "off",
       "react/no-unescaped-entities": "off",
       "react-hooks/purity": "off",
-      "@next/next/no-sync-scripts": "off"
+      "@next/next/no-sync-scripts": "off",
+      "@next/next/no-img-element": "off",
+      "@next/next/no-page-custom-font": "off"
     }
   },
   // Override default ignores of eslint-config-next.
@@ -24,7 +26,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    "scripts/**"
+    "scripts/**",
+    "backend/**",
+    "deploy/**"
   ]),
 ]);
 

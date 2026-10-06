@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FileQuestion, ArrowLeft, LayoutDashboard, Home } from 'lucide-react';
+import { FileQuestion, LayoutDashboard, Home } from 'lucide-react';
 
 export default function NotFound() {
   return (

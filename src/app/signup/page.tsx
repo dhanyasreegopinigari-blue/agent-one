@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import Logo from '@/components/brand/Logo';
@@ -22,7 +21,7 @@ import {
   ShieldCheck,
   ArrowLeft,
   Zap,
-  CheckCircle2
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function SignupPage() {
@@ -32,10 +31,7 @@ export default function SignupPage() {
     signup,
     loginWithGoogle,
     loginAsGuest,
-    handleGoogleSuccess,
-    handleGoogleError,
-    googleClientId,
-    isLoading
+    isLoading,
   } = useAuth();
 
   const [name, setName] = useState('');
@@ -45,12 +41,14 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGuestLoading, setIsGuestLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+    setInfoMessage('');
 
     if (password !== confirmPassword) {
       setErrorMessage('Passwords do not match. Please ensure both passwords match.');
@@ -70,7 +68,12 @@ export default function SignupPage() {
     setIsSubmitting(true);
     const res = await signup(name, email, password);
     if (res.success) {
-      router.push('/dashboard');
+      if (res.needsConfirmation) {
+        setInfoMessage('Check your email to confirm your account before signing in.');
+        setIsSubmitting(false);
+      } else {
+        router.replace('/dashboard');
+      }
     } else {
       setErrorMessage(res.error || 'Signup failed. Please try again.');
       setIsSubmitting(false);
@@ -79,63 +82,33 @@ export default function SignupPage() {
 
   const handleGuestLogin = async () => {
     setErrorMessage('');
+    setInfoMessage('');
     setIsGuestLoading(true);
     const res = await loginAsGuest();
     if (res.success) {
-      router.push('/dashboard');
+      router.replace('/dashboard');
     } else {
       setErrorMessage(res.error || 'Unable to launch guest workspace.');
       setIsGuestLoading(false);
     }
   };
 
-  const handleGoogleSignupFallback = async () => {
+  const handleGoogleSignup = async () => {
     setErrorMessage('');
+    setInfoMessage('');
     setIsSubmitting(true);
     const res = await loginWithGoogle();
     if (res.success) {
-      router.push('/dashboard');
+      router.replace('/dashboard');
     } else {
       setErrorMessage(res.error || 'Google registration failed.');
       setIsSubmitting(false);
     }
   };
 
-  const triggerGoogleSignup = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        }).then((res) => res.json());
-
-        if (userInfo && userInfo.email) {
-          await handleGoogleSuccess({ profile: userInfo });
-          router.push('/dashboard');
-          return;
-        }
-      } catch (err) {
-        console.warn('Google signup profile fetch notice:', err);
-      }
-      handleGoogleSignupFallback();
-    },
-    onError: () => {
-      handleGoogleSignupFallback();
-    },
-  });
-
-  const onGoogleSignupClick = () => {
-    setErrorMessage('');
-    setIsSubmitting(true);
-    try {
-      triggerGoogleSignup();
-    } catch {
-      handleGoogleSignupFallback();
-    }
-  };
-
   return (
     <div className="min-h-dvh w-full max-w-[100vw] flex flex-col justify-between bg-[var(--bg-canvas)] text-[var(--text-primary)] relative overflow-hidden transition-colors duration-300 select-none p-3.5 sm:p-6 lg:p-8">
-      {/* Background Google AI Studio & Relay Grid Mesh Layers */}
+      {/* Background Mesh Layers */}
       <div className="absolute inset-0 bg-studio-grid pointer-events-none opacity-70 dark:opacity-40 [mask-image:radial-gradient(ellipse_80%_70%_at_50%_40%,black_70%,transparent_100%)]" />
       <div className="absolute inset-0 bg-studio-dots pointer-events-none opacity-35 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_30%,black_70%,transparent_100%)]" />
       <div className="absolute inset-0 bg-studio-beam pointer-events-none" />
@@ -185,11 +158,11 @@ export default function SignupPage() {
               Create an Account
             </h1>
             <p className="text-xs sm:text-sm text-[#2E503B] dark:text-[#8E9690] leading-relaxed">
-              Start extracting & auditing documents with multimodal GraphRAG
+              Start chatting with your documents using local-first RAG
             </p>
           </div>
 
-          {/* Option 1: 1-Click Instant Guest Demo Button (Hero High-Priority Option) */}
+          {/* Option 1: 1-Click Instant Guest Demo Button */}
           <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/30 dark:border-emerald-500/30">
             <button
               type="button"
@@ -205,7 +178,7 @@ export default function SignupPage() {
               ) : (
                 <>
                   <Zap className="w-4 h-4 fill-[#052e16] text-[#052e16] group-hover:scale-110 transition-transform" />
-                  <span>Explore as Guest / 1-Click Instant Demo</span>
+                  <span>Explore as Guest / Instant Access</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform ml-auto" />
                 </>
               )}
@@ -215,7 +188,7 @@ export default function SignupPage() {
                 <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                 No registration required
               </span>
-              <span>Full Pro Access</span>
+              <span>Anonymous Supabase session</span>
             </div>
           </div>
 
@@ -232,13 +205,13 @@ export default function SignupPage() {
           <button
             type="button"
             disabled={isSubmitting || isLoading || isGuestLoading}
-            onClick={onGoogleSignupClick}
+            onClick={handleGoogleSignup}
             className="w-full py-2.5 px-4 rounded-xl bg-white/90 dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 border border-black/15 dark:border-white/15 text-[#0F172A] dark:text-[#F2F4F3] text-xs font-semibold flex items-center justify-center gap-2.5 transition-all shadow-xs disabled:opacity-50 cursor-pointer"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-emerald-600 dark:text-[#00FF85]" />
-                <span>Authenticating with Google...</span>
+                <span>Redirecting to Google...</span>
               </>
             ) : (
               <>
@@ -265,6 +238,14 @@ export default function SignupPage() {
             )}
           </button>
 
+          {/* Info Banner */}
+          {infoMessage && (
+            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <span>{infoMessage}</span>
+            </div>
+          )}
+
           {/* Error Banner */}
           {errorMessage && (
             <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
@@ -286,7 +267,7 @@ export default function SignupPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Roshan Kodi"
+                  placeholder="Your Name"
                   className="w-full pl-10 pr-3 py-2 bg-white dark:bg-white/5 border border-black/15 dark:border-white/15 rounded-xl text-xs sm:text-sm text-[#0F172A] dark:text-[#F2F4F3] placeholder:text-slate-400 dark:placeholder:text-[#8E9690] focus:bg-white dark:focus:bg-[#141a18] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
                 />
               </div>
@@ -409,7 +390,7 @@ export default function SignupPage() {
         {/* Security Trust Badge */}
         <div className="flex items-center justify-center gap-2 mt-4 text-[11px] font-mono text-slate-500 dark:text-slate-400">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-          <span>SOC-2 Type II Certified • 256-Bit SSL • Neo4j & Supabase Connected</span>
+          <span>256-Bit SSL Encrypted • Supabase Auth</span>
         </div>
       </main>
 

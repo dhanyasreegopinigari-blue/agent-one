@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
 import Logo from '@/components/brand/Logo';
-import { ArrowLeft, Lock, Sun, Moon, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sun, Moon, ShieldCheck, Sparkles } from 'lucide-react';
 
 interface AuthCardProps {
   title: string;

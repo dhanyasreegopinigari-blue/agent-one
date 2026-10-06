@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import Logo from '@/components/brand/Logo';
@@ -21,7 +20,7 @@ import {
   ShieldCheck,
   ArrowLeft,
   Zap,
-  CheckCircle2
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -31,10 +30,7 @@ export default function LoginPage() {
     login,
     loginWithGoogle,
     loginAsGuest,
-    handleGoogleSuccess,
-    handleGoogleError,
-    googleClientId,
-    isLoading
+    isLoading,
   } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -52,7 +48,7 @@ export default function LoginPage() {
 
     const res = await login(email, password);
     if (res.success) {
-      router.push('/dashboard');
+      router.replace('/dashboard');
     } else {
       setErrorMessage(res.error || 'Invalid email or password. Please check your credentials.');
       setIsSubmitting(false);
@@ -64,60 +60,28 @@ export default function LoginPage() {
     setIsGuestLoading(true);
     const res = await loginAsGuest();
     if (res.success) {
-      router.push('/dashboard');
+      router.replace('/dashboard');
     } else {
       setErrorMessage(res.error || 'Unable to launch guest workspace.');
       setIsGuestLoading(false);
     }
   };
 
-  const handleGoogleSignInFallback = async () => {
+  const handleGoogleLogin = async () => {
     setErrorMessage('');
     setIsSubmitting(true);
     const res = await loginWithGoogle();
     if (res.success) {
-      router.push('/dashboard');
+      router.replace('/dashboard');
     } else {
       setErrorMessage(res.error || 'Google sign-in failed.');
       setIsSubmitting(false);
     }
   };
 
-  const triggerGoogleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        }).then((res) => res.json());
-
-        if (userInfo && userInfo.email) {
-          await handleGoogleSuccess({ profile: userInfo });
-          router.push('/dashboard');
-          return;
-        }
-      } catch (err) {
-        console.warn('Google profile fetch notice:', err);
-      }
-      handleGoogleSignInFallback();
-    },
-    onError: () => {
-      handleGoogleSignInFallback();
-    },
-  });
-
-  const onGoogleLoginClick = () => {
-    setErrorMessage('');
-    setIsSubmitting(true);
-    try {
-      triggerGoogleLogin();
-    } catch {
-      handleGoogleSignInFallback();
-    }
-  };
-
   return (
     <div className="min-h-dvh w-full max-w-[100vw] flex flex-col justify-between bg-[var(--bg-canvas)] text-[var(--text-primary)] relative overflow-hidden transition-colors duration-300 select-none p-3.5 sm:p-6 lg:p-8">
-      {/* Background Google AI Studio & Relay Grid Mesh Layers */}
+      {/* Background Mesh Layers */}
       <div className="absolute inset-0 bg-studio-grid pointer-events-none opacity-70 dark:opacity-40 [mask-image:radial-gradient(ellipse_80%_70%_at_50%_40%,black_70%,transparent_100%)]" />
       <div className="absolute inset-0 bg-studio-dots pointer-events-none opacity-35 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_30%,black_70%,transparent_100%)]" />
       <div className="absolute inset-0 bg-studio-beam pointer-events-none" />
@@ -171,7 +135,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Option 1: 1-Click Instant Guest Demo Button (Hero High-Priority Option) */}
+          {/* Option 1: 1-Click Instant Guest Demo Button */}
           <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/30 dark:border-emerald-500/30">
             <button
               type="button"
@@ -187,7 +151,7 @@ export default function LoginPage() {
               ) : (
                 <>
                   <Zap className="w-4 h-4 fill-[#052e16] text-[#052e16] group-hover:scale-110 transition-transform" />
-                  <span>Explore as Guest / 1-Click Instant Demo</span>
+                  <span>Explore as Guest / Instant Access</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform ml-auto" />
                 </>
               )}
@@ -197,7 +161,7 @@ export default function LoginPage() {
                 <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                 No registration required
               </span>
-              <span>All 4 demo docs loaded</span>
+              <span>Anonymous Supabase session</span>
             </div>
           </div>
 
@@ -214,13 +178,13 @@ export default function LoginPage() {
           <button
             type="button"
             disabled={isSubmitting || isLoading || isGuestLoading}
-            onClick={onGoogleLoginClick}
+            onClick={handleGoogleLogin}
             className="w-full py-2.5 px-4 rounded-xl bg-white/90 dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 border border-black/15 dark:border-white/15 text-[#0F172A] dark:text-[#F2F4F3] text-xs font-semibold flex items-center justify-center gap-2.5 transition-all shadow-xs disabled:opacity-50 cursor-pointer"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-emerald-600 dark:text-[#00FF85]" />
-                <span>Authenticating with Google...</span>
+                <span>Redirecting to Google...</span>
               </>
             ) : (
               <>
@@ -354,7 +318,7 @@ export default function LoginPage() {
         {/* Security Trust Badge */}
         <div className="flex items-center justify-center gap-2 mt-4 text-[11px] font-mono text-slate-500 dark:text-slate-400">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-          <span>SOC-2 Type II Certified • 256-Bit SSL • Neo4j & Supabase Connected</span>
+          <span>256-Bit SSL Encrypted • Supabase Auth</span>
         </div>
       </main>
 
