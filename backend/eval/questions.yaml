@@ -1,0 +1,34 @@
+questions:
+  - question: "What is the notice period for termination?"
+    in_doc: true
+    expected_pages: [3]
+  - question: "What is the monthly fee?"
+    in_doc: true
+    expected_pages: [2]
+  - question: "Which law governs the agreement?"
+    in_doc: true
+    expected_pages: [6]
+  - question: "How long does confidentiality last after termination?"
+    in_doc: true
+    expected_pages: [5]
+  - question: "What is the liability cap?"
+    in_doc: true
+    expected_pages: [4]
+  - question: "When does the agreement take effect?"
+    in_doc: true
+    expected_pages: [1]
+  - question: "What is the late payment interest rate?"
+    in_doc: true
+    expected_pages: [2]
+  - question: "Who won the 2018 FIFA World Cup?"
+    in_doc: false
+    expected_pages: []
+  - question: "What is the capital of France?"
+    in_doc: false
+    expected_pages: []
+  - question: "Write a poem about the sea."
+    in_doc: false
+    expected_pages: []
+  - question: "Explain how photosynthesis works."
+    in_doc: false
+    expected_pages: []

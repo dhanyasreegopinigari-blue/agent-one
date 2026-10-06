@@ -46,12 +46,14 @@ class HashEmbedder:
         self.model = model
 
     async def embed_documents(self, texts: list[str]) -> np.ndarray:
+        import re
+
         if not texts:
             return np.empty((0, self.dim), dtype="float32")
         vectors = []
         for t in texts:
             vec = np.zeros(self.dim, dtype="float32")
-            for word in t.lower().split():
+            for word in re.findall(r"\w+", t.lower()):
                 h = abs(hash(word)) % self.dim
                 vec[h] += 1.0
             norm = np.linalg.norm(vec)
@@ -61,8 +63,10 @@ class HashEmbedder:
         return np.ascontiguousarray(vectors, dtype="float32")
 
     async def embed_query(self, text: str) -> np.ndarray:
+        import re
+
         vec = np.zeros(self.dim, dtype="float32")
-        for word in text.lower().split():
+        for word in re.findall(r"\w+", text.lower()):
             h = abs(hash(word)) % self.dim
             vec[h] += 1.0
         norm = np.linalg.norm(vec)
