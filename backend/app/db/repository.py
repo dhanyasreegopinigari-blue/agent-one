@@ -306,7 +306,10 @@ def add_message_pair(
                 asst_created_at,
             ),
         )
-        touch_session(session_id)
+        conn.execute(
+            "UPDATE sessions SET updated_at = ? WHERE id = ?",
+            (asst_created_at, session_id),
+        )
 
 
 def list_messages(session_id: str) -> list[dict]:
