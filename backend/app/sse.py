@@ -1,11 +1,45 @@
 import asyncio
 import json
+from dataclasses import dataclass
+from typing import Any
 
 SSE_HEADERS = {
     "Cache-Control": "no-cache",
     "X-Accel-Buffering": "no",
     "Connection": "keep-alive",
 }
+
+
+@dataclass
+class Status:
+    stage: str
+
+
+@dataclass
+class Sources:
+    sources: list[dict[str, Any]]
+
+
+@dataclass
+class Token:
+    text: str
+
+
+@dataclass
+class Reset:
+    pass
+
+
+@dataclass
+class Done:
+    message_text: str
+    model_used: str | None
+    fallback: bool
+    grounded: bool | None
+    cited: list[str]
+
+
+PipelineEvent = Status | Sources | Token | Reset | Done
 
 
 def sse(event: str, data: dict) -> str:

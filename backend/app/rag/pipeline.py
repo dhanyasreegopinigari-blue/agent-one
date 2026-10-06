@@ -1,6 +1,5 @@
 import re
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
 from typing import Any
 
 from app.config import get_settings
@@ -11,38 +10,7 @@ from app.rag.prompts import (
 )
 from app.rag.query_condenser import condense
 from app.rag.retriever import hit_to_source, retrieve
-
-
-@dataclass
-class Status:
-    stage: str
-
-
-@dataclass
-class Sources:
-    sources: list[dict[str, Any]]
-
-
-@dataclass
-class Token:
-    text: str
-
-
-@dataclass
-class Reset:
-    pass
-
-
-@dataclass
-class Done:
-    message_text: str
-    model_used: str | None
-    fallback: bool
-    grounded: bool
-    cited: list[str]
-
-
-PipelineEvent = Status | Sources | Token | Reset | Done
+from app.sse import Done, PipelineEvent, Reset, Sources, Status, Token
 
 
 class PdfRagPipeline:

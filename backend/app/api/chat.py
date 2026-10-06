@@ -15,18 +15,21 @@ from app.db import repository
 from app.embeddings.base import EmbeddingError
 from app.errors import AppError
 from app.llm.base import LLMUnavailable
-from app.rag.pipeline import (
+from app.rag.pipeline import PdfRagPipeline
+from app.sessions import service
+from app.sse import (
+    SSE_HEADERS,
     Done,
-    PdfRagPipeline,
     Reset,
     Sources,
     Status,
     Token,
+    sse,
+    with_heartbeat,
 )
-from app.sessions import service
-from app.sse import SSE_HEADERS, sse, with_heartbeat
 from app.vectorstore.faiss_store import IndexIncompatible
 from app.vectorstore.index_cache import get_index_cache
+from app.web_search.base import SearchError
 
 logger = logging.getLogger("app.api.chat")
 
@@ -85,6 +88,7 @@ async def chat_endpoint(
     user: CurrentUser = Depends(current_user),
     embedder: Any = Depends(get_embedder),
     llm_router: Any = Depends(get_router),
+    search_provider: Any = Depends(get_search_provider),
 ):
     session = await service.get_session(id, user.id)
 
@@ -152,9 +156,8 @@ async def chat_endpoint(
             else:
                 from app.web_search.pipeline import WebChatPipeline
 
-                provider = get_search_provider()
                 web_pipe = WebChatPipeline(
-                    provider=provider,
+                    provider=search_provider,
                     router=llm_router,
                 )
                 pipeline_stream = web_pipe.answer_stream(clean_msg, history)
@@ -195,18 +198,18 @@ async def chat_endpoint(
             except IndexIncompatible as e:
                 yield sse("error", {"code": "INDEX_INCOMPATIBLE", "message": str(e)})
                 return
-            except Exception as e:
+            except SearchError as e:
+                yield sse("error", {"code": "SEARCH_UNAVAILABLE", "message": str(e)})
+                return
+            except Exception:
                 logger.exception("Unexpected error in chat stream")
-                if e.__class__.__name__ == "SearchError":
-                    yield sse("error", {"code": "SEARCH_UNAVAILABLE", "message": str(e)})
-                else:
-                    yield sse(
-                        "error",
-                        {
-                            "code": "INTERNAL",
-                            "message": "An error occurred while generating the response.",
-                        },
-                    )
+                yield sse(
+                    "error",
+                    {
+                        "code": "INTERNAL",
+                        "message": "An error occurred while generating the response.",
+                    },
+                )
                 return
 
             if generation_complete:
